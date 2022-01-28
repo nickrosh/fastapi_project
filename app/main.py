@@ -3,7 +3,7 @@ from random import randrange
 import os
 import time
 
-from typing import Optional
+from typing import Optional, List
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 import psycopg2
@@ -69,13 +69,13 @@ def root():
     return {"message": "Welcome to the API"}
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
-    return {"data": posts}
+    return posts
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.PostResponse)
 def get_post(id: int, db: Session = Depends(get_db)):
     post_detail = db.query(models.Post).filter(models.Post.id == id).first()
 
@@ -83,20 +83,20 @@ def get_post(id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
 
-    return {"post_detail": post_detail}
+    return post_detail
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
 def create_post(post: schemas.Post, db: Session = Depends(get_db)):
     new_post = models.Post(**post.dict())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
 
-    return {"new_post": new_post}
+    return new_post
 
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.PostResponse)
 def update_post(id: int, post: schemas.Post, db: Session = Depends(get_db)):
     updated_post = db.query(models.Post).filter(models.Post.id == id)
 
@@ -109,7 +109,7 @@ def update_post(id: int, post: schemas.Post, db: Session = Depends(get_db)):
 
     db.commit()
 
-    return {"data": updated_post.first()}
+    return updated_post.first()
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
