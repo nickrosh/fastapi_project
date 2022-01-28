@@ -1,19 +1,46 @@
 from random import randrange
+import os
+import time
 
 from typing import Optional
 from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
 
+load_dotenv()
 
 app = FastAPI()
+
+retries = 5
+while retries > 0:
+    try:
+        connection = psycopg2.connect(
+            host="host.docker.internal",
+            database="fastapi",
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            cursor_factory=RealDictCursor
+        )
+        cursor = connection.cursor()
+        print("database connection established")
+        cursor.close()
+        connection.close()
+        break
+
+    except ConnectionError as error:
+        print("database connection failed")
+        print(f"Error: {error}")
+        retries -= 1
+        time.sleep(2)
 
 
 class Post(BaseModel):
     title: str
     content: str
     published: bool = True
-    rating: Optional[int] = None
 
 
 my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1},
