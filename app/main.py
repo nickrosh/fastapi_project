@@ -1,3 +1,4 @@
+from multiprocessing import synchronize
 from random import randrange
 import os
 import time
@@ -74,21 +75,19 @@ def root():
 
 @app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
-    db.query(Post)
-    return {"message": "it worked"}
+    posts = db.query(models.Post).all()
+    return {"data": posts}
 
 
 @app.get("/posts")
-def get_posts():
-    cursor.execute("""SELECT * FROM POSTS""")
-    posts = cursor.fetchall()
+def get_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 
 @app.get("/posts/{id}")
-def get_post(id: int):
-    cursor.execute("""SELECT * FROM POSTS WHERE id = %s""", (str(id),))
-    post_detail = cursor.fetchone()
+def get_post(id: int, db: Session = Depends(get_db)):
+    post_detail = db.query(models.Post).filter(models.Post.id == id).first()
     if not post_detail:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
@@ -97,39 +96,40 @@ def get_post(id: int):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
-    cursor.execute(
-    """INSERT INTO POSTS (title, content, published) VALUES (%s, %s, %s)
-    RETURNING *""",
-    (post.title, post.content, post.published))
-    new_post = cursor.fetchone()
-    connection.commit()
+def create_post(post: Post, db: Session = Depends(get_db)):
+    new_post = models.Post(**post.dict())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+
     return {"new_post": new_post}
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
-    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s
-                      WHERE id = %s RETURNING *""",
-                      (post.title, post.content, post.published, str(id)))
+def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+    updated_post = db.query(models.Post).filter(models.Post.id == id)
 
-    updated_post = cursor.fetchone()
-    connection.commit()
-
-    if updated_post == None:
+    if updated_post.first() == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id {id} does not exist")
 
-    return {"data": updated_post}
+    updated_post.update(post.dict(),
+         synchronize_session=False)
+
+    db.commit()
+
+    return {"data": updated_post.first()}
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    cursor.execute("""DELETE FROM POSTS WHERE id = %s RETURNING *""",
-                  (str(id)))
-    deleted_post = cursor.fetchone()
-    connection.commit()
-    if deleted_post == None:
+def delete_post(id: int, db: Session = Depends(get_db)):
+    deleted_post = db.query(models.Post).filter(models.Post.id == id)
+
+    if deleted_post.first() == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id {id} does not exist")
+
+    deleted_post.delete(synchronize_session=False)
+    db.commit()
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
