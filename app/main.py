@@ -26,8 +26,8 @@ while retries > 0:
         )
         cursor = connection.cursor()
         print("database connection established")
-        cursor.close()
-        connection.close()
+        # cursor.close()
+        # connection.close()
         break
 
     except ConnectionError as error:
@@ -43,8 +43,10 @@ class Post(BaseModel):
     published: bool = True
 
 
-my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1},
-{"title": "title of post 2", "content": "content of post 2", "id": 2}]
+my_posts = [
+    {"title": "title of post 1", "content": "content of post 1", "id": 1},
+    {"title": "title of post 2", "content": "content of post 2", "id": 2}
+    ]
 
 
 def find_post(id):
@@ -66,49 +68,56 @@ def root():
 
 @app.get("/posts")
 def get_posts():
-    return {"data": my_posts}
+    cursor.execute("""SELECT * FROM POSTS""")
+    posts = cursor.fetchall()
+    return {"data": posts}
 
 
 @app.get("/posts/{id}")
 def get_post(id: int):
-    post = find_post(id)
-
-    if not post:
+    cursor.execute("""SELECT * FROM POSTS WHERE id = %s""", (str(id),))
+    post_detail = cursor.fetchone()
+    if not post_detail:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
 
-    return {"post_detail": post}
+    return {"post_detail": post_detail}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(post: Post):
-    post_dict = post.dict()
-    post_dict['id'] = randrange(0,9999999999)
-    my_posts.append(post_dict)
-    return {"new_post": post_dict}
+    cursor.execute(
+    """INSERT INTO POSTS (title, content, published) VALUES (%s, %s, %s)
+    RETURNING *""",
+    (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    connection.commit()
+    return {"new_post": new_post}
 
 
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
-    index = find_post_index(id)
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s
+                      WHERE id = %s RETURNING *""",
+                      (post.title, post.content, post.published, str(id)))
 
-    if index == None:
+    updated_post = cursor.fetchone()
+    connection.commit()
+
+    if updated_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id {id} does not exist")
 
-    post_dict = post.dict()
-    post_dict['id'] = id
-    my_posts[index] = post_dict
-    return {"data": post_dict}
+    return {"data": updated_post}
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    index = find_post_index(id)
-
-    if index == None:
+    cursor.execute("""DELETE FROM POSTS WHERE id = %s RETURNING *""",
+                  (str(id)))
+    deleted_post = cursor.fetchone()
+    connection.commit()
+    if deleted_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id {id} does not exist")
-                            
-    my_posts.pop(index)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
