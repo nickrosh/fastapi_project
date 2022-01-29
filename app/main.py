@@ -9,16 +9,15 @@ from fastapi.params import Body
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
-from app import models, schemas
-from app.database import engine, get_db
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+
+from app import models, schemas, utils
+from app.database import engine, get_db
 
 # load_dotenv()
 
 # initialization settings
 app = FastAPI()
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
 models.Base.metadata.create_all(bind=engine)
 
 
@@ -129,10 +128,20 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+
+@app.get("/users/{id}", response_model=schemas.UserResponse)
+def get_user(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id).first()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"User with id: {id}")
+    return user
+
 @app.post("/users", status_code=status.HTTP_201_CREATED,
           response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    hashed_password = pwd_context.hash(user.password)
+    hashed_password = utils.hash(user.password)
     user.password = hashed_password
     new_user = models.User(**user.dict())
     db.add(new_user)
