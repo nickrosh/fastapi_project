@@ -12,12 +12,15 @@ from dotenv import load_dotenv
 from app import models, schemas
 from app.database import engine, get_db
 from sqlalchemy.orm import Session
+from passlib.context import CryptContext
 
 # load_dotenv()
 
+# initialization settings
 app = FastAPI()
-
+pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
 models.Base.metadata.create_all(bind=engine)
+
 
 
 # retries = 5
@@ -86,7 +89,8 @@ def get_post(id: int, db: Session = Depends(get_db)):
     return post_detail
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, 
+          response_model=schemas.PostResponse)
 def create_post(post: schemas.Post, db: Session = Depends(get_db)):
     new_post = models.Post(**post.dict())
     db.add(new_post)
@@ -124,3 +128,15 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.post("/users", status_code=status.HTTP_201_CREATED,
+          response_model=schemas.UserResponse)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    hashed_password = pwd_context.hash(user.password)
+    user.password = hashed_password
+    new_user = models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
