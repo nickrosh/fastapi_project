@@ -6,16 +6,13 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from app import database, schemas, models
+from app.config import settings
 
 oath2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 load_dotenv()
 
-# SECRET_KEY
-# Algorithm: HS256
-# Expiration Time of the Token
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = 'HS256'
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
