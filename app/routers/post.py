@@ -1,4 +1,3 @@
-from sys import prefix
 from typing import List
 
 from fastapi import Response, status, HTTPException, Depends, APIRouter
