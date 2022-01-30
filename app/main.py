@@ -1,8 +1,3 @@
-from multiprocessing import synchronize
-from random import randrange
-import os
-import time
-
 from fastapi import FastAPI
 from app import models
 from app.database import engine
