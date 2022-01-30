@@ -12,7 +12,9 @@ class PostResponse(BaseModel):
     title: str
     content: str
     published: bool
+    id: int
     created_at: datetime
+    user_id: int
 
     class Config:
         orm_mode=True
