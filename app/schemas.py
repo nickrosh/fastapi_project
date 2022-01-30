@@ -40,6 +40,14 @@ class PostResponse(BaseModel):
     class Config:
         orm_mode=True
 
+    
+class PostOut(BaseModel):
+    Post: PostResponse
+    votes: int
+
+    class Config:
+        orm_mode=True
+
 
 class Token(BaseModel):
     access_token: str
@@ -53,4 +61,3 @@ class TokenData(BaseModel):
 class Vote(BaseModel):
     post_id: int
     direction: conint(le=1)
-    

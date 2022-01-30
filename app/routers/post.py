@@ -1,5 +1,6 @@
 from fastapi import Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app import models, oauth2, schemas
 from app.database import get_db
@@ -11,19 +12,30 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[schemas.PostResponse])
+@router.get("/", response_model=list[schemas.PostOut])
 def get_posts(db: Session = Depends(get_db), 
               current_user: int = Depends(oauth2.get_current_user),
               limit: int = 10, skip: int = 0, search: None | str = ''):
+    
+    
     page = skip*limit
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(page).all()
-    return posts
+
+    results = db.query(models.Post, func.count(models.Vote.post_id).label('votes')).outerjoin(
+        models.Vote, models.Vote.post_id == models.Post.id).group_by(
+        models.Post.id).filter(models.Post.title.contains(search)).limit(
+        limit).offset(page).all()
+    
+    return results
 
 
-@router.get("/{id}", response_model=schemas.PostResponse)
+@router.get("/{id}", response_model=schemas.PostOut)
 def get_post(id: int, db: Session = Depends(get_db), 
              current_user: int = Depends(oauth2.get_current_user)):
-    post_detail = db.query(models.Post).filter(models.Post.id == id).first()
+    # post_detail = db.query(models.Post).filter(models.Post.id == id).first()
+
+    post_detail = db.query(models.Post, func.count(models.Vote.post_id).label('votes')).outerjoin(
+        models.Vote, models.Vote.post_id == models.Post.id).group_by(
+        models.Post.id).filter(models.Post.id == id).first()
 
     if not post_detail:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
