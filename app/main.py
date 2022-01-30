@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from app import models
 from app.database import engine
-from app.routers.vote import vote
 from .routers import post, user, auth, vote
 
 
