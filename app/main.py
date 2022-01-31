@@ -14,6 +14,7 @@ origins = [
     "https://www.google.com"
 ]
 
+
 # CORS settings and what to allow
 # app.add_middleware(
 #     CORSMiddleware,
