@@ -1,3 +1,4 @@
+from typing import List, Optional
 from fastapi import Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -12,10 +13,10 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[schemas.PostOut])
+@router.get("/", response_model=List[schemas.PostOut])
 def get_posts(db: Session = Depends(get_db), 
               current_user: int = Depends(oauth2.get_current_user),
-              limit: int = 10, skip: int = 0, search: None | str = ''):
+              limit: int = 10, skip: int = 0, search: Optional[str] = ''):
     
     
     page = skip*limit
