@@ -25,6 +25,12 @@ def get_user(id: int, db: Session = Depends(get_db)):
 @router.post("/", status_code=status.HTTP_201_CREATED,
           response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing_email = db.query(models.User).filter(
+                              models.User.email == user.email).first()
+    if existing_email:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="email already exists")
+                            
     hashed_password = utils.hash(user.password)
     user.password = hashed_password
     new_user = models.User(**user.dict())
