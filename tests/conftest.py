@@ -6,7 +6,7 @@ import pytest
 from app.main import app
 from app.config import settings
 from app.database import get_db
-from app import models
+from app import models, oauth2
 
 
 SQLALCHEMY_DATABASE_URL = f'postgresql://{settings.DATABASE_USER}:{settings.DATABASE_PASSWORD}@{settings.DATABASE_HOSTNAME}:{settings.DATABASE_PORT}/{settings.DATABASE_NAME}_test'
@@ -51,3 +51,18 @@ def test_user(client):
     new_user = response.json()
     new_user['password'] = user_data['password']
     return new_user
+
+
+@pytest.fixture
+def token(test_user):
+    return oauth2.create_access_token({"user_id": test_user['id']})
+
+
+@pytest.fixture
+def authorized_client(client, token):
+    client.headers = {
+        **client.headers,
+        "Authorization": f"Bearer {token}"
+    }
+    return client
+    
