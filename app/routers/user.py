@@ -11,7 +11,6 @@ router = APIRouter(
 )
 
 
-
 @router.get("/{id}", response_model=schemas.UserResponse)
 def get_user(id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()

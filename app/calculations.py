@@ -33,3 +33,4 @@ class BankAccount():
 
     def collect_interest(self):
         self.balance = round(1.1*self.balance, 2)
+        
