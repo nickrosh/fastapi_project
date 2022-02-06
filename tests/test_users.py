@@ -18,7 +18,12 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 Base = declarative_base()
 
 
-def override_get_db():
+@pytest.fixture
+def session():
+    # before our tests drop all tables so we have a clean slate, then create
+    # all tables. This way we can also see the tables after the tests are done.
+    models.Base.metadata.drop_all(bind=engine)
+    models.Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     try:
         yield db
@@ -26,25 +31,27 @@ def override_get_db():
         db.close()
 
 
-app.dependency_overrides[get_db] = override_get_db
+@pytest.fixture
+def client(session):
+    def override_get_db():
+        try:
+            yield session
+        finally:
+            session.close()
+    app.dependency_overrides[get_db] = override_get_db
+    yield TestClient(app)
 
 
-models.Base.metadata.create_all(bind=engine)
-
-
-client = TestClient(app)
-
-
-def test_root():
+def test_root(client):
     res = client.get('/')
     assert res.json().get('message') == 'Welcome to the API!!'
     assert res.status_code == 200
 
 
-def test_create_user():
-    response = client.post("/users/", json={"email": "hello123456@hotmale.com",
+def test_create_user(client):
+    response = client.post("/users/", json={"email": "hello123@hotmale.com",
                                             "password": "password123"})
 
     new_user = schemas.UserResponse(**response.json())
-    assert new_user.email == "hello123456@hotmale.com"
+    assert new_user.email == "hello123@hotmale.com"
     assert response.status_code == 201
