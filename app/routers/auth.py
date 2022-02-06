@@ -22,7 +22,7 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(),
     # check that the passwords are equal
     if not utils.verify(user_credentials.password, user.password):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
-                            detail='invalid Credentials')
+                            detail='Invalid Credentials')
 
     # Create JWT Token
     access_token = oauth2.create_access_token(data= {'user_id': user.id})

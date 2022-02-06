@@ -22,3 +22,11 @@ def test_login_user(client, test_user):
     assert id == test_user['id']
     assert login_response.token_type == 'bearer'
     assert response.status_code == 200
+
+
+def test_incorrect_login(client, test_user):
+    response = client.post('/login', data={'username': test_user['email'], 
+                                           'password': 'wrongpassword'})
+
+    assert response.status_code == 403
+    assert response.json().get('detail') == 'Invalid Credentials'
