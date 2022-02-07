@@ -12,11 +12,23 @@ jobs:
       DATABASE_NAME: ${{secrets.DATABASE_NAME}}
       DATABASE_PORT: ${{secrets.DATABASE_PORT}}
       DATABASE_HOSTNAME: ${{secrets.DATABASE_HOSTNAME}}
-      POSTGRES_USER: ${{secrets.POSTGRES_USER}}
-      POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
-      POSTGRES_DB: ${{secrets.POSTGRES_DB}}
       SECRET_KEY: ${{secrets.SECRET_KEY}}
       ALGORITHM: ${{secrets.ALGORITHM}}
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: ${{secrets.POSTGRES_USER}}
+          POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
+          POSTGRES_DB: ${{secrets.POSTGRES_DB}}_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     runs-on: ubuntu-latest
     steps: 
       - name: pulling git repo
