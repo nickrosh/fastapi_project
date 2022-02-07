@@ -66,3 +66,32 @@ def authorized_client(client, token):
     }
     return client
     
+
+@pytest.fixture
+def test_posts(test_user, session):
+    posts_data = [{
+        "title": "first title",
+        "content": "first content",
+        "user_id": test_user['id']
+    },
+    {
+        "title": "second title",
+        "content": "second content",
+        "user_id": test_user['id']
+    },
+    {
+        "title": "third title",
+        "content": "third content",
+        "user_id": test_user['id']
+    }]
+
+    def create_post_model(posts) -> models.Post:
+        return models.Post(**posts)
+
+    post_map_list = list(map(create_post_model, posts_data))
+    session.add_all(post_map_list)
+    session.commit()
+    
+    posts = session.query(models.Post).all()
+    return posts
+    
