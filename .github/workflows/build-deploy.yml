@@ -11,12 +11,10 @@ jobs:
       DATABASE_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
       DATABASE_NAME: ${{secrets.DATABASE_NAME}}
       DATABASE_PORT: ${{secrets.DATABASE_PORT}}
-      DATABASE_HOSTNAME: ${{secrets.DATABASE_HOSTNAME}}
+      DATABASE_HOSTNAME: localhost
+      # DATABASE_HOSTNAME: ${{secrets.DATABASE_HOSTNAME}}
       SECRET_KEY: ${{secrets.SECRET_KEY}}
       ALGORITHM: ${{secrets.ALGORITHM}}
-      POSTGRES_USER: ${{secrets.POSTGRES_USER}}
-      POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
-      POSTGRES_DB: ${{secrets.POSTGRES_DB}}
     services:
       postgres:
         image: postgres
