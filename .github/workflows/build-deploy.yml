@@ -63,3 +63,19 @@ jobs:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
           heroku_app_name: ${{secrets.HEROKU_APP_NAME}} #Must be unique in Heroku
           heroku_email: ${{secrets.HEROKU_EMAIL}}
+
+      # This SSH into the server with simple password, ssh-key will be 
+      # more complex. Then go to the source code, pull the latest code and
+      # then restart the api service. But note, you must pipe the Sudo password
+      # with the echo to the -S flag to be able to run in sudo
+      
+      # - name: deploying to Ubuntu
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{secrets.PROD_HOST}}
+      #     username: ${{secrets.PROD_USERNAME}}
+      #     password: ${{secrets.PROD_PASSWORD}}
+      #     script: |
+      #       cd app/src
+      #       git pull
+      #       echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
