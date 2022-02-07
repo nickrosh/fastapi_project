@@ -1,5 +1,9 @@
+from urllib import response
 import pytest
 from app import schemas
+
+
+# GET TESTS
 
 def test_get_all_posts(authorized_client, test_posts):
     response = authorized_client.get('/posts/')
@@ -37,6 +41,9 @@ def test_get_one_post_not_exist(authorized_client, test_posts):
     assert response.status_code == 404
 
 
+# CREATE TESTS
+
+
 @pytest.mark.parametrize("title, content, published", [
     ("awesome new title", "new content", True),
     ("decent new title", "nu content", True),
@@ -72,6 +79,9 @@ def test_unauthorized_user_create_post(client, test_user, test_posts):
     assert response.status_code == 401
 
 
+# DELETE TESTS
+
+
 def test_delete_post_success(authorized_client, test_user, test_posts):
     response = authorized_client.delete(f'/posts/{test_posts[0].id}')
     assert response.status_code == 204
@@ -91,3 +101,45 @@ def test_delete_post_other_user(authorized_client, test_user,
                                 second_test_user, test_posts):
     response = authorized_client.delete(f'/posts/{test_posts[3].id}')
     assert response.status_code == 403
+
+
+# UPDATE TESTS
+
+
+def test_update_post(authorized_client, test_user, test_posts):
+    data = {
+        'title': 'updated title',
+        'content': 'updated content',
+        'id': test_posts[0].id
+    }
+    response = authorized_client.put(f'/posts/{test_posts[0].id}', json=data)
+    updated_post = schemas.Post(**response.json())
+    assert response.status_code == 200
+    assert updated_post.title == data['title']
+    assert updated_post.content == data['content']
+
+
+def test_update_other_user_post(authorized_client, test_user, 
+                                second_test_user, test_posts):
+    data = {
+        'title': 'updated title',
+        'content': 'updated content',
+        'id': test_posts[3].id
+    }
+    response = authorized_client.put(f'/posts/{test_posts[3].id}', json=data)
+    assert response.status_code == 403
+
+
+def test_unauthorized_update_post(client, test_user, test_posts):
+    response = client.put(f'/posts/{test_posts[0].id}')
+    assert response.status_code == 401
+
+
+def test_update_post_nonexistant(authorized_client, test_user, test_posts):
+    data = {
+        'title': 'updated title',
+        'content': 'updated content',
+        'id': test_posts[3].id
+    }
+    response = authorized_client.put('/posts/12345678', json=data)
+    assert response.status_code == 404
