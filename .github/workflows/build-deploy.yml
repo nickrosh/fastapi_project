@@ -12,6 +12,7 @@ jobs:
       DATABASE_NAME: ${{secrets.DATABASE_NAME}}
       DATABASE_PORT: ${{secrets.DATABASE_PORT}}
       DATABASE_HOSTNAME: localhost
+      # for some reason host.docker.internal doesn't work here
       # DATABASE_HOSTNAME: ${{secrets.DATABASE_HOSTNAME}}
       SECRET_KEY: ${{secrets.SECRET_KEY}}
       ALGORITHM: ${{secrets.ALGORITHM}}
