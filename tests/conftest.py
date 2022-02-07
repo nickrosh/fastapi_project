@@ -54,6 +54,17 @@ def test_user(client):
 
 
 @pytest.fixture
+def second_test_user(client):
+    user_data = {"email": "test123@test.com",
+                 "password": "password"}
+    response = client.post('/users/', json=user_data)
+    assert response.status_code == 201
+    new_user = response.json()
+    new_user['password'] = user_data['password']
+    return new_user
+
+
+@pytest.fixture
 def token(test_user):
     return oauth2.create_access_token({"user_id": test_user['id']})
 
@@ -68,7 +79,7 @@ def authorized_client(client, token):
     
 
 @pytest.fixture
-def test_posts(test_user, session):
+def test_posts(test_user, second_test_user, session):
     posts_data = [{
         "title": "first title",
         "content": "first content",
@@ -83,6 +94,11 @@ def test_posts(test_user, session):
         "title": "third title",
         "content": "third content",
         "user_id": test_user['id']
+    },
+    {
+        "title": "fourth title",
+        "content": "fourth content",
+        "user_id": second_test_user['id']
     }]
 
     def create_post_model(posts) -> models.Post:
